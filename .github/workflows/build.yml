@@ -5,12 +5,6 @@ on:
     branches: [main]
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      release:
-        description: "Create a release after build"
-        required: true
-        default: false
-        type: boolean
 
 jobs:
   build:
@@ -38,15 +32,30 @@ jobs:
       - name: Build debug APK with Gradle
         run: ./gradlew assembleDebug
 
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="dev"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "APK name: TaskPlan-v${VERSION}.apk"
+
+      - name: Rename APK with version
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/TaskPlan-v${{ steps.version.outputs.version }}.apk"
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 7
+          name: TaskPlan-v${{ steps.version.outputs.version }}
+          path: app/build/outputs/apk/debug/TaskPlan-v${{ steps.version.outputs.version }}.apk
+          retention-days: 90
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.release)
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -54,27 +63,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-debug
+          name: TaskPlan-v${{ steps.version.outputs.version }}
           path: apk
 
-      - name: Generate release tag
-        id: tag
+      - name: Generate release info
+        id: info
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=manual-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
-          fi
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: Release ${{ steps.tag.outputs.tag }}
-          body: "APK build for ${{ steps.tag.outputs.tag }}"
+          tag_name: ${{ steps.info.outputs.tag }}
+          name: TaskPlan ${{ steps.info.outputs.tag }}
+          body: |
+            ## TaskPlan ${{ steps.info.outputs.tag }}
+
+            下载 APK 进行安装：
+            - 支持 Android 10+
+            - 首次安装后直接打开即可
+            - 更新安装请直接覆盖安装
           draft: false
           prerelease: false
-          files: apk/*.apk
+          files: apk/TaskPlan-v${{ steps.version.outputs.version }}.apk

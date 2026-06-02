@@ -10,8 +10,8 @@ android {
         applicationId = "com.example.hellofirst"
         minSdk = 29
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.1"
+        versionCode = 5
+        versionName = "2.0.0"
     }
 
     buildTypes {

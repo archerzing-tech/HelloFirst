@@ -22,6 +22,9 @@ public interface TaskDao {
     @Query("SELECT * FROM tasks WHERE target_date < :startOfWeek ORDER BY target_date DESC, created_at ASC")
     List<Task> getHistoryTasks(long startOfWeek);
 
+    @Query("SELECT * FROM tasks WHERE target_date < :todayStart AND completed = 0 ORDER BY target_date ASC, created_at ASC")
+    List<Task> getOverdueTasks(long todayStart);
+
     @Query("SELECT * FROM tasks ORDER BY target_date DESC, created_at ASC")
     List<Task> getAllTasks();
 
