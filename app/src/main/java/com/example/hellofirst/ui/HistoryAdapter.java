@@ -37,7 +37,10 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         HistoryFragment.HistoryGroup group = groups.get(position);
         holder.dateHeader.setText(group.dateLabel);
 
-        long completed = group.tasks.stream().filter(t -> t.completed).count();
+        int completed = 0;
+        for (Task t : group.tasks) {
+            if (t.completed) completed++;
+        }
         holder.summary.setText(completed + "/" + group.tasks.size() + " 完成");
 
         TaskAdapter taskAdapter = new TaskAdapter(group.tasks, false, listener);

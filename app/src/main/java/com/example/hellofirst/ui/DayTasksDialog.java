@@ -4,8 +4,8 @@ import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,7 +21,6 @@ import com.example.hellofirst.data.Task;
 import com.example.hellofirst.data.TaskDao;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class DayTasksDialog extends DialogFragment {
@@ -50,29 +49,31 @@ public class DayTasksDialog extends DialogFragment {
             dateMillis = getArguments().getLong(ARG_DATE);
             title = getArguments().getString(ARG_TITLE);
         }
-        taskDao = AppDatabase.getInstance(requireContext()).taskDao();
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
+        taskDao = AppDatabase.getInstance(requireContext()).taskDao();
         View view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_day_detail, null);
         recyclerView = view.findViewById(R.id.dayTaskList);
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         EditText input = view.findViewById(R.id.dayTaskInput);
-        View addBtn = view.findViewById(R.id.dayTaskAddBtn);
+        ImageButton addBtn = view.findViewById(R.id.dayTaskAddBtn);
 
         taskAdapter = new TaskAdapter(new ArrayList<>(), false, new TaskAdapter.OnTaskListener() {
             @Override
             public void onToggleComplete(Task task) {
                 task.completed = !task.completed;
-                new Thread(() -> { taskDao.update(task); loadTasks(); }).start();
+                Task t = task;
+                new Thread(() -> { taskDao.update(t); loadTasks(); }).start();
             }
 
             @Override
             public void onDelete(Task task) {
-                new Thread(() -> { taskDao.delete(task); loadTasks(); }).start();
+                Task t = task;
+                new Thread(() -> { taskDao.delete(t); loadTasks(); }).start();
             }
         });
         recyclerView.setAdapter(taskAdapter);
@@ -84,50 +85,32 @@ public class DayTasksDialog extends DialogFragment {
                 Task task = new Task(content, dateMillis);
                 new Thread(() -> {
                     taskDao.insert(task);
-                    requireActivity().runOnUiThread(() -> input.setText(""));
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> input.setText(""));
+                    }
                     loadTasks();
                 }).start();
             }
         });
 
-        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+        return new AlertDialog.Builder(requireContext())
                 .setTitle(title)
                 .setView(view)
                 .setPositiveButton("关闭", null)
                 .create();
-        dialog.getWindow().setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        return dialog;
     }
 
     private void loadTasks() {
         new Thread(() -> {
-            long dayStart = getStartOfDay(dateMillis);
-            long dayEnd = getEndOfDay(dateMillis);
+            if (!isAdded()) return;
+            long dayStart = WeekFragment.getStartOfDay(dateMillis);
+            long dayEnd = WeekFragment.getEndOfDay(dateMillis);
             final List<Task> tasks = taskDao.getTasksForDate(dayStart, dayEnd);
-            requireActivity().runOnUiThread(() -> taskAdapter.updateTasks(tasks));
+            if (!isAdded() || getActivity() == null) return;
+            getActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
+                taskAdapter.updateTasks(tasks);
+            });
         }).start();
-    }
-
-    private long getStartOfDay(long millis) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(millis);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis();
-    }
-
-    private long getEndOfDay(long millis) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(millis);
-        cal.set(Calendar.HOUR_OF_DAY, 23);
-        cal.set(Calendar.MINUTE, 59);
-        cal.set(Calendar.SECOND, 59);
-        cal.set(Calendar.MILLISECOND, 999);
-        return cal.getTimeInMillis();
     }
 }

@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.hellofirst.R;
-import com.example.hellofirst.adapter.TaskAdapter;
 import com.example.hellofirst.data.AppDatabase;
 import com.example.hellofirst.data.Task;
 import com.example.hellofirst.data.TaskDao;
@@ -26,7 +25,6 @@ import java.util.Locale;
 
 public class WeekFragment extends Fragment {
     private RecyclerView recyclerView;
-    private WeekDayAdapter adapter;
     private TaskDao taskDao;
 
     @Nullable
@@ -52,6 +50,7 @@ public class WeekFragment extends Fragment {
 
     public void loadWeek() {
         new Thread(() -> {
+            if (!isAdded()) return;
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
             long mondayStart = getStartOfDay(cal.getTimeInMillis());
@@ -77,8 +76,11 @@ public class WeekFragment extends Fragment {
                 cal.add(Calendar.DAY_OF_MONTH, 1);
             }
 
+            if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
-                adapter = new WeekDayAdapter(days, day -> {
+                if (!isAdded()) return;
+                WeekDayAdapter adapter = new WeekDayAdapter(days, day -> {
+                    if (!isAdded()) return;
                     DayTasksDialog dialog = DayTasksDialog.newInstance(day.dateMillis, day.label + " " + day.dateStr);
                     dialog.show(getChildFragmentManager(), "DayTasks");
                 });
@@ -87,7 +89,7 @@ public class WeekFragment extends Fragment {
         }).start();
     }
 
-    private long getStartOfDay(long millis) {
+    static long getStartOfDay(long millis) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(millis);
         cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -97,7 +99,7 @@ public class WeekFragment extends Fragment {
         return cal.getTimeInMillis();
     }
 
-    private long getEndOfDay(long millis) {
+    static long getEndOfDay(long millis) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(millis);
         cal.set(Calendar.HOUR_OF_DAY, 23);

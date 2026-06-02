@@ -40,7 +40,7 @@ public class WeekDayAdapter extends RecyclerView.Adapter<WeekDayAdapter.ViewHold
         holder.dayDate.setText(day.dateStr);
 
         int taskCount = day.tasks.size();
-        long todayStart = com.example.hellofirst.adapter.TaskAdapter.getStartOfDay(System.currentTimeMillis());
+        long todayStart = WeekFragment.getStartOfDay(System.currentTimeMillis());
         boolean isPast = day.dateMillis < todayStart;
 
         if (taskCount > 0) {

@@ -17,6 +17,7 @@ import com.example.hellofirst.R;
 import com.example.hellofirst.data.Task;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -103,12 +104,12 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.ViewHolder> {
     }
 
     public static long getStartOfDay(long millis) {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
+        Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(millis);
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        cal.set(java.util.Calendar.MINUTE, 0);
-        cal.set(java.util.Calendar.SECOND, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         return cal.getTimeInMillis();
     }
 }

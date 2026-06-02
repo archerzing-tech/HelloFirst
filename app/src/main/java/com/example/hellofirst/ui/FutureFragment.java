@@ -22,12 +22,9 @@ import com.example.hellofirst.data.AppDatabase;
 import com.example.hellofirst.data.Task;
 import com.example.hellofirst.data.TaskDao;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class FutureFragment extends Fragment {
     private RecyclerView recyclerView;
@@ -76,12 +73,14 @@ public class FutureFragment extends Fragment {
 
     private void loadFuture() {
         new Thread(() -> {
+            if (!isAdded()) return;
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
-            cal.add(Calendar.WEEK_OF_YEAR, 1);
-            long nextWeekStart = getStartOfDay(cal.getTimeInMillis());
-            final List<Task> tasks = taskDao.getFutureTasks(nextWeekStart - 1);
+            long thisWeekEnd = getEndOfDay(cal.getTimeInMillis());
+            final List<Task> tasks = taskDao.getFutureTasks(thisWeekEnd);
+            if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
                 taskAdapter.updateTasks(tasks);
                 emptyText.setVisibility(tasks.isEmpty() ? View.VISIBLE : View.GONE);
             });
@@ -93,13 +92,15 @@ public class FutureFragment extends Fragment {
         new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
             Calendar selected = Calendar.getInstance();
             selected.set(year, month, dayOfMonth);
-            long dateMillis = getStartOfDay(selected.getTimeInMillis());
+            long dateMillis = WeekFragment.getStartOfDay(selected.getTimeInMillis());
 
-            View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_task, null);
-            EditText input = dialogView.findViewById(R.id.addTaskInput);
+            EditText input = new EditText(requireContext());
+            input.setHint("输入任务内容");
+            input.setPadding(48, 24, 48, 24);
+
             new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                     .setTitle("添加任务")
-                    .setView(dialogView)
+                    .setView(input)
                     .setPositiveButton("确定", (dialog, which) -> {
                         String content = input.getText().toString().trim();
                         if (!content.isEmpty()) {
@@ -116,13 +117,13 @@ public class FutureFragment extends Fragment {
                 .show();
     }
 
-    private long getStartOfDay(long millis) {
+    static long getEndOfDay(long millis) {
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(millis);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
         return cal.getTimeInMillis();
     }
 }

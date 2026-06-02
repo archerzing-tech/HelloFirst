@@ -55,9 +55,10 @@ public class HistoryFragment extends Fragment {
 
     private void loadHistory() {
         new Thread(() -> {
+            if (!isAdded()) return;
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY);
-            long weekStart = getStartOfDay(cal.getTimeInMillis());
+            long weekStart = WeekFragment.getStartOfDay(cal.getTimeInMillis());
             List<Task> allTasks = taskDao.getHistoryTasks(weekStart);
 
             List<HistoryGroup> groups = new ArrayList<>();
@@ -79,7 +80,9 @@ public class HistoryFragment extends Fragment {
                 groups.add(new HistoryGroup(sdf.format(new Date(currentDate)), currentDate, currentList));
             }
 
+            if (!isAdded()) return;
             requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) return;
                 historyAdapter = new HistoryAdapter(groups, new TaskAdapter.OnTaskListener() {
                     @Override
                     public void onToggleComplete(Task task) {
@@ -96,16 +99,6 @@ public class HistoryFragment extends Fragment {
                 emptyText.setVisibility(groups.isEmpty() ? View.VISIBLE : View.GONE);
             });
         }).start();
-    }
-
-    private long getStartOfDay(long millis) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(millis);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis();
     }
 
     static class HistoryGroup {
