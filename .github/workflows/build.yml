@@ -41,17 +41,17 @@ jobs:
             VERSION="dev"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "APK name: TaskPlan-v${VERSION}.apk"
+          echo "APK name: HelloFirst-v${VERSION}.apk"
 
       - name: Rename APK with version
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/TaskPlan-v${{ steps.version.outputs.version }}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/HelloFirst-v${{ steps.version.outputs.version }}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: TaskPlan-v${{ steps.version.outputs.version }}
-          path: app/build/outputs/apk/debug/TaskPlan-v${{ steps.version.outputs.version }}.apk
+          name: HelloFirst-v${{ steps.version.outputs.version }}
+          path: app/build/outputs/apk/debug/HelloFirst-v${{ steps.version.outputs.version }}.apk
           retention-days: 90
 
   release:
@@ -72,7 +72,7 @@ jobs:
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         with:
-          name: TaskPlan-v${{ steps.version.outputs.version }}
+          name: HelloFirst-v${{ steps.version.outputs.version }}
           path: apk
 
       - name: Generate release info
@@ -86,9 +86,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.info.outputs.tag }}
-          name: TaskPlan ${{ steps.info.outputs.tag }}
+          name: HelloFirst ${{ steps.info.outputs.tag }}
           body: |
-            ## TaskPlan ${{ steps.info.outputs.tag }}
+            ## HelloFirst ${{ steps.info.outputs.tag }}
 
             下载 APK 进行安装：
             - 支持 Android 10+
@@ -96,4 +96,4 @@ jobs:
             - 更新安装请直接覆盖安装
           draft: false
           prerelease: false
-          files: apk/TaskPlan-v${{ steps.version.outputs.version }}.apk
+          files: apk/HelloFirst-v${{ steps.version.outputs.version }}.apk
